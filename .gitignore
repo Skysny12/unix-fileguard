@@ -1,0 +1,22 @@
+# 컴파일 결과물
+*.o
+*.out
+*.exe
+server
+client
+
+# 실행 중 생성되는 파일
+*.log
+*.lock
+*.fifo
+core
+core.*
+
+# 임시 파일
+*.tmp
+*~
+
+# 테스트 데이터 및 백업
+data/
+versions/
+
