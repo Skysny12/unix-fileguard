@@ -11,7 +11,7 @@
 
 #include "common.h"
 #include "ipc.h"
-
+#include "file_manager.h"
 /*
  * UNIX 기반 파일 충돌 방지 및 변경 이력 관리 시스템
  *
@@ -106,25 +106,66 @@ static int read_request(int fd, Request *req) {
     return 1;
 }
 
+
 /*
  * 함수명: process_request
- * 기능: 클라이언트 요청을 확인하고 응답을 생성한다.
+ * 기능: 클라이언트 요청 종류에 따라 파일 관리 함수 실행
  *
- * 현재는 IPC 및 다중 프로세스 동작 확인을 위해
- * 임시 응답을 생성한다.
+ * 현재 구현 범위
+ * 1. 파일 등록
+ * 2. 파일 내용 조회
  *
- * 추후 팀원 B가 구현한 파일 관리 함수를 연결하여
- * 파일 등록, 조회, 수정, 복구 작업을 수행할 예정이다.
+ * 파일 수정, 변경 이력 및 복구 기능은 추후 연동한다.
  */
 static void process_request(const Request *req, Response *res) {
     memset(res, 0, sizeof(*res));
+    res->status = -1;
 
-    res->status = 0;
+    // 파일명이 비어 있거나 문자열이 종료되지 않은 경우
+    if (memchr(req->filename, '\0',
+               sizeof(req->filename)) == NULL ||
+        req->filename[0] == '\0') {
+        snprintf(res->message, sizeof(res->message),
+                 "올바르지 않은 파일 이름입니다.");
+        return;
+    }
 
-    snprintf(res->message, sizeof(res->message),
-             "서버가 요청을 정상적으로 받았습니다! (작업: %d)",
-             req->type);
+    switch (req->type) {
+
+        case FILE_REGISTER:
+            // 팀원 B의 파일 등록 함수 호출
+            if (register_file(req->filename) == 0) {
+                res->status = 0;
+                snprintf(res->message, sizeof(res->message),
+                         "파일 등록 성공: %s", req->filename);
+            } else {
+                snprintf(res->message, sizeof(res->message),
+                         "파일 등록 실패");
+            }
+            break;
+
+        case FILE_READ: {
+            // 팀원 B의 파일 조회 함수 호출
+            int n = read_file(req->filename,
+                              res->message,
+                              sizeof(res->message));
+
+            if (n >= 0) {
+                res->status = 0;
+            } else {
+                snprintf(res->message, sizeof(res->message),
+                         "파일 조회 실패");
+            }
+            break;
+        }
+
+        default:
+            snprintf(res->message, sizeof(res->message),
+                     "아직 구현되지 않은 기능입니다.");
+            break;
+    }
 }
+
 
 int main(void) {
     int fd;
