@@ -22,3 +22,10 @@ core.*
 data/
 test.txt
 
+# 테스트 실행 파일
+/test_update
+/test_history
+/test_restore
+
+# 테스트 데이터
+/update_demo.txt
