@@ -6,6 +6,7 @@
 #include <errno.h>
 #include "history.h"
 #include "file_lock.h"
+#include "log.h"
 
 /*
  * 파일 수정 전 현재 내용을 버전별로 백업한다.
@@ -251,14 +252,26 @@ int restore_file(const char *filename, int version) {
     printf("버전 %d 복구 완료!\n", version);
     result = 0;
 
+
 cleanup:
-    // 파일 잠금 해제 및 자원 정리
+    // 파일 잠금 해제
     if (unlock_file(fd) == -1)
         result = -1;
 
-    close(fd);
+    if (close(fd) == -1) {
+        perror("파일 닫기 실패");
+        result = -1;
+    }
+
     close(src);
+
+    // 복구 작업 성공 시 로그 기록
+    if (result == 0) {
+        if (log_action("RESTORE", filename, version) == -1) {
+            fprintf(stderr,
+                "복구가 완료되었으나 로그 기록에 실패했습니다.\n");
+        }
+    }
 
     return result;
 }
-

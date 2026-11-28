@@ -7,6 +7,7 @@
 #include "file_manager.h"
 #include "file_lock.h"
 #include "history.h"
+#include "log.h"
 
 /*
  * 파일 등록 함수
@@ -131,7 +132,13 @@ int update_file(const char *filename, const char *content) {
         return -1;
     }
 
+
     close(fd);
+
+    // 파일 수정 성공 시 작업 로그 기록
+    if (log_action("UPDATE", filename, 0) == -1) {
+        fprintf(stderr, "수정이 완료되었으나 로그 기록에 실패했습니다.\n");
+    }
+
     return 0;
 }
-
